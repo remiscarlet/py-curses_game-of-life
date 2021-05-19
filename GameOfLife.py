@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
-
+import time
+import random
 import curses
 from curses import wrapper
-
 
 import logging
 
@@ -18,6 +17,12 @@ logger.addHandler(file_handler)
 
 
 def generateEmptyBoard():
+    """
+    Will generate an empty board of size BOARD_SIDE_LENGTH all initialized to False
+
+    Returns:
+    A 2d list
+    """
     board = []
     for i in range(BOARD_SIDE_LENGTH):
         row = [False] * BOARD_SIDE_LENGTH
@@ -26,22 +31,11 @@ def generateEmptyBoard():
     return board
 
 
-def printBoard(board):
-    print("=" * BOARD_SIDE_LENGTH)
+def logBoard(board):
     for row in board:
-        # We'll want to figure out a "prettier" way to print
-        """
-        def translateCellStateToString(cell_state):
-          if cell_state:
-            return "O"
-          else:
-            return " "
-        """
-
         row_str = map(lambda cell_state: "O" if cell_state else ".", row)
 
-        print("".join(row_str))
-    print("=" * BOARD_SIDE_LENGTH)
+        logger.info("".join(row_str))
 
 
 def progressGeneration(board):
@@ -62,22 +56,6 @@ def getCellState(board, x, y):
     2. If a given cell has >3 neighbors, overpop -> dead
     3. If a given cell has 2 neighbors and alive, stays alive
     4. If a given cell has <2 neighbors and is alive, dies
-
-    if cell dead:
-      if neighbors are 3:
-        cell becomes alive
-      else:
-        still dead :(
-
-    if cell alive:
-      if neighbors<2:
-        cell dies
-      if neighbors are 2 or 3:
-        still alive
-      if neighbors>3
-        cell dies
-
-
     """
 
     curr_cell = board[y][x]
@@ -142,25 +120,32 @@ def drawBoard(stdscr, board):
     stdscr.refresh()
 
 
+def getRandCellState():
+    return random.randint(0, 1)
+
+
 def initializeBoard(board):
-    """
-    TODO: Randomize intiial board
-    """
-    board[3][4] = True
-    board[2][3] = True
-    board[0][3] = True
-    board[0][2] = True
-    board[0][4] = True
+    # TODO: Randomize initial state
+    for y in range(BOARD_SIDE_LENGTH):
+        for x in range(BOARD_SIDE_LENGTH):
+            board[y][x] = getRandCellState()
 
     return board
 
 
-BOARD_SIDE_LENGTH = 10
-
-GENERATIONS = 2
+BOARD_SIDE_LENGTH = 20
+GENERATION_DELAY_TIME = 0.1
+GENERATIONS = 400
 
 
 def main():
+    """
+    TODOs:
+    - Randomize the initial state
+    - Increase size of board
+    - Add some borders/text to UI
+    - Refactor/code quality considerations
+    """
     global GENERATIONS
     stdscr = curses.initscr()
     stdscr.clear()
@@ -168,12 +153,15 @@ def main():
 
     board = generateEmptyBoard()
     board = initializeBoard(board)
+    logBoard(board)
     drawBoard(stdscr, board)
 
     while GENERATIONS > 0:
         board = progressGeneration(board)
         drawBoard(stdscr, board)
         GENERATIONS -= 1
+
+        time.sleep(GENERATION_DELAY_TIME)
 
 
 main()
