@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import time
 import random
 import curses
@@ -38,7 +39,7 @@ def logBoard(board):
         logger.info("".join(row_str))
 
 
-def progressGeneration(board):
+def getNextGeneration(board):
     next_board = generateEmptyBoard()
 
     for x in range(BOARD_SIDE_LENGTH):
@@ -85,83 +86,75 @@ def checkNeighbors(board, x, y):
             new_x, new_y = x + dx, y + dy
             if (
                 new_x < BOARD_SIDE_LENGTH
+                and new_x > -1
                 and new_y < BOARD_SIDE_LENGTH
+                and new_y > -1
                 and board[y + dy][x + dx]
             ):
-                # TODO: Does wrapping the board affect the gamerules?
                 alive_neighbors += 1
 
     return alive_neighbors
 
 
 def drawBoard(stdscr, board):
-    """
-    stdscr.addch(3, 0, "H")
-    stdscr.addch(3, 1, "i")
-    stdscr.addch(3, 2, "!")
-
-    [.       v- (x:1,y:0)
-      [" ", "O", " "],
-      ["O", "O", "O"],
-      [" ", " ", " "],
-    ]
-
-    board[0][1]
-    x0, y1
-    y1, x0
-
-    """
+    global CURR_GENERATION
     for y in range(BOARD_SIDE_LENGTH):
         for x in range(BOARD_SIDE_LENGTH):
             symbol = " "
             if board[y][x]:
                 symbol = "O"
             stdscr.addch(x, y, symbol)
+
+    stdscr.addstr(BOARD_SIDE_LENGTH, 0, f"Generation #{CURR_GENERATION}")
+
     stdscr.refresh()
 
 
-def getRandCellState():
+def getRandomCellState():
     return random.randint(0, 1)
 
 
 def initializeBoard(board):
-    # TODO: Randomize initial state
     for y in range(BOARD_SIDE_LENGTH):
         for x in range(BOARD_SIDE_LENGTH):
-            board[y][x] = getRandCellState()
+            board[y][x] = getRandomCellState()
 
     return board
 
 
-BOARD_SIDE_LENGTH = 20
+BOARD_SIDE_LENGTH = None
 GENERATION_DELAY_TIME = 0.1
-GENERATIONS = 400
+MAX_GENERATIONS = 1000
+CURR_GENERATION = 1
 
 
-def main():
+def main(stdscr):
     """
     TODOs:
-    - Randomize the initial state
-    - Increase size of board
     - Add some borders/text to UI
     - Refactor/code quality considerations
     """
-    global GENERATIONS
-    stdscr = curses.initscr()
+    global CURR_GENERATION, MAX_GENERATIONS
+    global BOARD_SIDE_LENGTH
+    curses.curs_set(False)
     stdscr.clear()
     stdscr.refresh()
+
+    BOARD_SIDE_LENGTH = (
+        min(stdscr.getmaxyx()) - 1
+    )  # Very bottom row will be used for generation count text
 
     board = generateEmptyBoard()
     board = initializeBoard(board)
     logBoard(board)
     drawBoard(stdscr, board)
 
-    while GENERATIONS > 0:
-        board = progressGeneration(board)
+    while CURR_GENERATION < MAX_GENERATIONS:
+        board = getNextGeneration(board)
         drawBoard(stdscr, board)
-        GENERATIONS -= 1
+        CURR_GENERATION += 1
 
         time.sleep(GENERATION_DELAY_TIME)
 
 
-main()
+curses.wrapper(main)
