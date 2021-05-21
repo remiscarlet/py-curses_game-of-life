@@ -1,3 +1,9 @@
-# Game of Life
+# Conway's Game of Life
 
-Implementing Conway's GoL as a pair programming task with a junior programmer as part of the Recurse Center.
+Originally implemented as a pair programming task as part of the Recurse Center.
+
+Maybe implementing as HashLife next for fun.
+
+## Replit
+
+Can be run on Replit [here](https://replit.com/@remiscarlet/py-cursesgame-of-life).

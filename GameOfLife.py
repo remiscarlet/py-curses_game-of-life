@@ -24,9 +24,11 @@ def generateEmptyBoard():
     Returns:
     A 2d list
     """
+    global BOARD_WIDTH, BOARD_HEIGHT
+
     board = []
-    for i in range(BOARD_SIDE_LENGTH):
-        row = [False] * BOARD_SIDE_LENGTH
+    for i in range(BOARD_HEIGHT):
+        row = [False] * BOARD_WIDTH
         board.append(row)
 
     return board
@@ -40,10 +42,11 @@ def logBoard(board):
 
 
 def getNextGeneration(board):
+    global BOARD_WIDTH, BOARD_HEIGHT
     next_board = generateEmptyBoard()
 
-    for x in range(BOARD_SIDE_LENGTH):
-        for y in range(BOARD_SIDE_LENGTH):
+    for x in range(BOARD_WIDTH):
+        for y in range(BOARD_HEIGHT):
             next_board[y][x] = getCellState(board, x, y)
 
     return next_board
@@ -77,6 +80,7 @@ def getCellState(board, x, y):
 
 
 def checkNeighbors(board, x, y):
+    global BOARD_WIDTH, BOARD_HEIGHT
     alive_neighbors = 0
     for dx in range(-1, 2):
         for dy in range(-1, 2):
@@ -85,9 +89,9 @@ def checkNeighbors(board, x, y):
 
             new_x, new_y = x + dx, y + dy
             if (
-                new_x < BOARD_SIDE_LENGTH
+                new_x < BOARD_WIDTH
                 and new_x > -1
-                and new_y < BOARD_SIDE_LENGTH
+                and new_y < BOARD_HEIGHT
                 and new_y > -1
                 and board[y + dy][x + dx]
             ):
@@ -97,15 +101,21 @@ def checkNeighbors(board, x, y):
 
 
 def drawBoard(stdscr, board):
+    global BOARD_WIDTH, BOARD_HEIGHT
     global CURR_GENERATION
-    for y in range(BOARD_SIDE_LENGTH):
-        for x in range(BOARD_SIDE_LENGTH):
-            symbol = " "
-            if board[y][x]:
-                symbol = "O"
-            stdscr.addch(x, y, symbol)
+    try:
+        for y in range(BOARD_HEIGHT):
+            for x in range(BOARD_WIDTH):
+                symbol = " "
+                if board[y][x]:
+                    symbol = "O"
+                stdscr.addch(y, x, symbol)
 
-    stdscr.addstr(BOARD_SIDE_LENGTH, 0, f"Generation #{CURR_GENERATION}")
+        stdscr.addstr(BOARD_HEIGHT, 0, f"Generation #{CURR_GENERATION}")
+    except:
+        raise Exception(
+            "Failed to draw onto screen. Did you change the window size just now?"
+        )
 
     stdscr.refresh()
 
@@ -115,14 +125,16 @@ def getRandomCellState():
 
 
 def initializeBoard(board):
-    for y in range(BOARD_SIDE_LENGTH):
-        for x in range(BOARD_SIDE_LENGTH):
+    global BOARD_WIDTH, BOARD_HEIGHT
+    for y in range(BOARD_HEIGHT):
+        for x in range(BOARD_WIDTH):
             board[y][x] = getRandomCellState()
 
     return board
 
 
-BOARD_SIDE_LENGTH = None
+BOARD_WIDTH = None
+BOARD_HEIGHT = None
 GENERATION_DELAY_TIME = 0.1
 MAX_GENERATIONS = 1000
 CURR_GENERATION = 1
@@ -135,14 +147,14 @@ def main(stdscr):
     - Refactor/code quality considerations
     """
     global CURR_GENERATION, MAX_GENERATIONS
-    global BOARD_SIDE_LENGTH
+    global BOARD_WIDTH, BOARD_HEIGHT
     curses.curs_set(False)
     stdscr.clear()
     stdscr.refresh()
 
-    BOARD_SIDE_LENGTH = (
-        min(stdscr.getmaxyx()) - 1
-    )  # Very bottom row will be used for generation count text
+    BOARD_HEIGHT, BOARD_WIDTH = stdscr.getmaxyx()
+    BOARD_HEIGHT -= 1  # Very bottom row will be used for printing text.
+    logger.info(f"WIDTH: {BOARD_WIDTH}, HEIGHT: {BOARD_HEIGHT}")
 
     board = generateEmptyBoard()
     board = initializeBoard(board)
